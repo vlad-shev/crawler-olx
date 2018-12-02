@@ -2,15 +2,16 @@ import io
 import sys
 import unittest
 from unittest.mock import patch
-from urllib.error import URLError
 from re import match
+
+from requests.exceptions import ConnectionError
 
 import crawler
 
 
 class TestCrawler(unittest.TestCase):
     def setUp(self):
-        self.invalid_url = 'htt://olx.com'
+        self.invalid_url = 'http://olx.cas'
 
     def test_crawler(self):
         output = io.StringIO()
@@ -35,7 +36,7 @@ class TestCrawler(unittest.TestCase):
 
     def test_get_html(self):
         self.assertTrue(crawler.get_html())
-        with self.assertRaises(URLError):
+        with self.assertRaises(ConnectionError):
             crawler.get_html(self.invalid_url)
 
     def test_main(self):
