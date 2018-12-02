@@ -1,17 +1,15 @@
 import sys
 import getopt
+import requests
 from multiprocessing import Pool
-from urllib.request import urlopen, Request
-from urllib.error import URLError
 from bs4 import BeautifulSoup
 
 BASE_URL = 'https://www.olx.ua/list/q-'
 
 
 def get_html(url=BASE_URL):
-    req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    with urlopen(req) as res:
-        html = res.read()
+    req = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+    html = req.text
     return html
 
 
@@ -24,19 +22,19 @@ def link_generator(html):
 
 
 def crawl_controller(query):
-    pool = Pool(4)
-    for page in range(1, 3):
-        try:
-            html = get_html(f'{BASE_URL}{query}/?page={page}')
-            pool.map(crawler, link_generator(html))
-        except URLError:
-            print('OLX is unavailable')
+    with Pool(4) as pool:
+        for page in range(1, 3):
+            try:
+                html = get_html(f'{BASE_URL}{query}/?page={page}')
+                pool.map(crawler, link_generator(html))
+            except requests.exceptions.ConnectionError:
+                print('OLX is unavailable')
 
 
 def crawler(link):
     try:
         html = get_html(link)
-    except URLError:
+    except requests.exceptions.ConnectionError:
         print('OLX is unavailable')
         return
     soup = BeautifulSoup(html, 'html.parser').find('div', id='offerdescription')
